@@ -4,6 +4,7 @@ import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { RescheduleModal } from "@/components/reschedule-modal";
+import { UNLIMITED_CREDITS } from "@/lib/constants/policies";
 
 export default function DashboardPage() {
   const [rescheduleModal, setRescheduleModal] = useState<{
@@ -69,7 +70,7 @@ export default function DashboardPage() {
             </div>
             <div>
               <dt className="muted">Credits</dt>
-              <dd>{ms.creditsRemaining >= 999 ? "Unlimited" : ms.creditsRemaining}</dd>
+              <dd>{ms.creditsRemaining >= UNLIMITED_CREDITS ? "Unlimited" : ms.creditsRemaining}</dd>
             </div>
           </dl>
         ) : (

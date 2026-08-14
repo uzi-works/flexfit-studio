@@ -9,15 +9,8 @@ import {
 } from "@/db/schema";
 import { router, protectedProcedure } from "../trpc";
 
-/**
- * Members may reschedule free of charge up to this many hours before the
- * original class starts. This is more generous than cancellation policy.
- */
-export const FREE_RESCHEDULE_HOURS = 4;
-
-function hoursUntil(iso: string, now = new Date()): number {
-  return (new Date(iso).getTime() - now.getTime()) / 36e5;
-}
+import { FREE_RESCHEDULE_HOURS } from "@/lib/constants/policies";
+import { hoursUntil } from "@/lib/date";
 
 async function activeMembershipFor(
   db: typeof import("@/db").db,
