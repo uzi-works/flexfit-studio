@@ -35,7 +35,17 @@ export default function TrainerSchedulePage() {
         {classes && classes.length > 0 ? (
           <div className="panel divide-y" style={{ borderColor: "var(--border)" }}>
             {classes.map((cls) => (
-              <TrainerClassCard key={cls.id} classId={cls.id} className={cls.name} startsAt={cls.startsAt} room={cls.room} durationMin={cls.durationMin} cancelled={cls.cancelled} />
+              <TrainerClassCard
+                key={cls.id}
+                classId={cls.id}
+                className={cls.name}
+                startsAt={cls.startsAt}
+                room={cls.room}
+                durationMin={cls.durationMin}
+                cancelled={cls.cancelled}
+                bookedCount={cls.bookedCount}
+                checkinsCount={cls.checkinsCount}
+              />
             ))}
           </div>
         ) : (

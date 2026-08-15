@@ -13,6 +13,7 @@ export const classesRouter = router({
           from: z.string().optional(),
           to: z.string().optional(),
           includeCancelled: z.boolean().default(false),
+          name: z.string().optional(),
         })
         .default({}),
     )
@@ -21,6 +22,7 @@ export const classesRouter = router({
       if (input.from) filters.push(gte(classes.startsAt, input.from));
       if (input.to) filters.push(lte(classes.startsAt, input.to));
       if (!input.includeCancelled) filters.push(eq(classes.cancelled, false));
+      if (input.name) filters.push(eq(classes.name, input.name));
 
       const rows = await ctx.db
         .select({

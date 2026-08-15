@@ -30,16 +30,14 @@ export function RescheduleModal({
   const { data: availableClasses } = trpc.classes.list.useQuery(
     {
       from: new Date().toISOString(),
+      name: fromClassName,
     },
     {
       enabled: isOpen,
     }
   );
 
-  // Filter to only same-name classes (excluding the original)
-  const sameNameClasses = (availableClasses || []).filter(
-    (cls) => cls.name === fromClassName
-  );
+  const sameNameClasses = availableClasses || [];
 
   const reschedule = trpc.reschedules.reschedule.useMutation({
     onSuccess: async () => {

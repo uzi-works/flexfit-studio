@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { TRPCError } from "@trpc/server";
-import { eq, and, gte } from "drizzle-orm";
-import { classes, users, trainerAvailability } from "@/db/schema";
+import { eq, and, gte, sql } from "drizzle-orm";
+import { classes, users, trainerAvailability, bookings, checkins } from "@/db/schema";
 import { router, protectedProcedure } from "../trpc";
 
 export const trainersRouter = router({
@@ -15,7 +15,7 @@ export const trainersRouter = router({
 
     const now = new Date().toISOString();
 
-    return ctx.db
+    const rows = await ctx.db
       .select({
         id: classes.id,
         name: classes.name,
@@ -23,6 +23,16 @@ export const trainersRouter = router({
         startsAt: classes.startsAt,
         durationMin: classes.durationMin,
         cancelled: classes.cancelled,
+        bookedCount: sql<number>`(
+          select count(*) from ${bookings}
+          where ${bookings.classId} = ${classes.id}
+            and ${bookings.status} in ('booked', 'attended')
+        )`,
+        checkinsCount: sql<number>`(
+          select count(*) from ${checkins}
+          inner join ${bookings} on ${checkins.bookingId} = ${bookings.id}
+          where ${bookings.classId} = ${classes.id}
+        )`,
       })
       .from(classes)
       .where(
@@ -33,6 +43,12 @@ export const trainersRouter = router({
         ),
       )
       .orderBy(classes.startsAt);
+
+    return rows.map((r) => ({
+      ...r,
+      bookedCount: Number(r.bookedCount),
+      checkinsCount: Number(r.checkinsCount),
+    }));
   }),
 
   availability: protectedProcedure.query(async ({ ctx }) => {
