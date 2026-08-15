@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatDateTime } from "@/lib/format";
 
@@ -23,13 +23,20 @@ export function RescheduleModal({
 }: RescheduleModalProps) {
   const [selectedClassId, setSelectedClassId] = useState<number | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [nowDate, setNowDate] = useState(() => new Date().toISOString());
 
   const utils = trpc.useUtils();
+
+  useEffect(() => {
+    if (isOpen) {
+      setNowDate(new Date().toISOString());
+    }
+  }, [isOpen]);
 
   // Get available classes with the same name
   const { data: availableClasses } = trpc.classes.list.useQuery(
     {
-      from: new Date().toISOString(),
+      from: nowDate,
       name: fromClassName,
     },
     {

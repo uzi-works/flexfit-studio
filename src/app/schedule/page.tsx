@@ -1,13 +1,15 @@
 "use client";
 
+import { useState } from "react";
 import { trpc } from "@/lib/trpc";
 import { formatDateTime } from "@/lib/format";
 
 export default function SchedulePage() {
   const utils = trpc.useUtils();
   const { data: user } = trpc.auth.me.useQuery();
+  const [fromDate] = useState(() => new Date().toISOString());
   const { data: classes, isLoading } = trpc.classes.list.useQuery({
-    from: new Date().toISOString(),
+    from: fromDate,
   });
 
   const book = trpc.bookings.book.useMutation({
