@@ -13,6 +13,7 @@ import { router, protectedProcedure, staffProcedure } from "../trpc";
 
 import { CORPORATE_FREE_CANCELLATION_HOURS } from "@/lib/constants/policies";
 import { hoursUntil } from "@/lib/date";
+import { getCorporateClassBookedCount } from "@/server/db/queries/bookings";
 
 
 async function getCompanyForMember(
@@ -122,17 +123,8 @@ export const corporateBookingsRouter = router({
         });
       }
 
-      const [{ count }] = await ctx.db
-        .select({ count: sql<number>`count(*)` })
-        .from(corporateBookings)
-        .where(
-          and(
-            eq(corporateBookings.classId, cls.id),
-            eq(corporateBookings.status, "booked"),
-          ),
-        );
-
-      const isFull = Number(count) >= cls.capacity;
+      const bookedCount = await getCorporateClassBookedCount(ctx.db, cls.id);
+      const isFull = bookedCount >= cls.capacity;
 
       const created = await ctx.db
         .insert(corporateBookings)

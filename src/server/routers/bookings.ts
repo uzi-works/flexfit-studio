@@ -8,24 +8,8 @@ import { FREE_CANCELLATION_HOURS, UNLIMITED_CREDITS } from "@/lib/constants/poli
 import { hoursUntil } from "@/lib/date";
 
 
-async function activeMembershipFor(
-  db: typeof import("@/db").db,
-  userId: number,
-) {
-  const today = new Date().toISOString().slice(0, 10);
-  return db
-    .select()
-    .from(memberships)
-    .where(
-      and(
-        eq(memberships.userId, userId),
-        eq(memberships.status, "active"),
-        sql`${memberships.endDate} >= ${today}`,
-      ),
-    )
-    .orderBy(desc(memberships.endDate))
-    .get();
-}
+import { activeMembershipFor } from "@/server/db/queries/memberships";
+import { getClassBookedCount } from "@/server/db/queries/bookings";
 
 export const bookingsRouter = router({
   mine: protectedProcedure
@@ -115,14 +99,8 @@ export const bookingsRouter = router({
         });
       }
 
-      const [{ count }] = await ctx.db
-        .select({ count: sql<number>`count(*)` })
-        .from(bookings)
-        .where(
-          and(eq(bookings.classId, cls.id), eq(bookings.status, "booked")),
-        );
-
-      const isFull = Number(count) >= cls.capacity;
+      const bookedCount = await getClassBookedCount(ctx.db, cls.id);
+      const isFull = bookedCount >= cls.capacity;
 
       const created = await ctx.db
         .insert(bookings)

@@ -1,5 +1,6 @@
 import { z } from "zod";
 import { and, eq, gte, sql, lte, desc, inArray } from "drizzle-orm";
+import { getClassBookedCountSql } from "@/server/db/queries/bookings";
 import {
   users,
   memberships,
@@ -69,11 +70,10 @@ export const adminRouter = router({
           name: classes.name,
           startsAt: classes.startsAt,
           capacity: classes.capacity,
-          booked: sql<number>`(
-            select count(*) from ${bookings}
-            where ${bookings.classId} = ${classes.id}
-              and ${bookings.status} in ('booked','attended')
-          )`.as("booked"),
+          booked: getClassBookedCountSql(classes.id, [
+            "booked",
+            "attended",
+          ]).as("booked"),
         })
         .from(classes)
         .where(eq(classes.cancelled, false))

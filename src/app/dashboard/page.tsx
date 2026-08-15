@@ -5,6 +5,7 @@ import { trpc } from "@/lib/trpc";
 import { formatDate, formatDateTime } from "@/lib/format";
 import { RescheduleModal } from "@/components/reschedule-modal";
 import { UNLIMITED_CREDITS } from "@/lib/constants/policies";
+import { BookingListItem } from "@/components/booking/booking-list-item";
 
 export default function DashboardPage() {
   const [rescheduleModal, setRescheduleModal] = useState<{
@@ -98,47 +99,20 @@ export default function DashboardPage() {
         {bookings?.length ? (
           <div className="space-y-2">
             {bookings.map((b) => (
-              <div key={b.id} className="panel flex items-center gap-2 p-4 flex-wrap sm:flex-nowrap">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <h3 className="font-medium">{b.className}</h3>
-                    <span className="muted text-xs uppercase tracking-wide">
-                      {b.status}
-                    </span>
-                  </div>
-                  <p className="muted mt-0.5 text-sm">
-                    {formatDateTime(b.startsAt)} &middot; {b.room}
-                  </p>
-                </div>
-
-                {(b.status === "booked" || b.status === "waitlisted") && (
-                  <div className="flex gap-2 w-full sm:w-auto">
-                    {b.status === "booked" && (
-                      <button
-                        className="btn text-sm flex-1 sm:flex-none"
-                        disabled={cancel.isPending}
-                        onClick={() => {
-                          setRescheduleModal({
-                            isOpen: true,
-                            bookingId: b.id,
-                            className: b.className,
-                            classTime: b.startsAt,
-                          });
-                        }}
-                      >
-                        Reschedule
-                      </button>
-                    )}
-                    <button
-                      className="btn text-sm flex-1 sm:flex-none"
-                      disabled={cancel.isPending}
-                      onClick={() => cancel.mutate({ bookingId: b.id })}
-                    >
-                      Cancel
-                    </button>
-                  </div>
-                )}
-              </div>
+              <BookingListItem
+                key={b.id}
+                booking={b}
+                isCancelPending={cancel.isPending}
+                onCancel={(bookingId) => cancel.mutate({ bookingId })}
+                onReschedule={(booking) => {
+                  setRescheduleModal({
+                    isOpen: true,
+                    bookingId: booking.id,
+                    className: booking.className,
+                    classTime: booking.startsAt,
+                  });
+                }}
+              />
             ))}
           </div>
         ) : (

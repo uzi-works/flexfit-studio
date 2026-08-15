@@ -3,6 +3,7 @@ import { TRPCError } from "@trpc/server";
 import { and, asc, eq, gte, lte, sql } from "drizzle-orm";
 import { classes, bookings, users } from "@/db/schema";
 import { router, publicProcedure, staffProcedure, adminProcedure } from "../trpc";
+import { getClassBookedCountSql } from "@/server/db/queries/bookings";
 
 export const classesRouter = router({
   list: publicProcedure
@@ -33,11 +34,7 @@ export const classesRouter = router({
           creditCost: classes.creditCost,
           cancelled: classes.cancelled,
           trainerName: users.name,
-          booked: sql<number>`(
-            select count(*) from ${bookings}
-            where ${bookings.classId} = ${classes.id}
-              and ${bookings.status} = 'booked'
-          )`.as("booked"),
+          booked: getClassBookedCountSql(classes.id, ["booked"]).as("booked"),
         })
         .from(classes)
         .leftJoin(users, eq(classes.trainerId, users.id))

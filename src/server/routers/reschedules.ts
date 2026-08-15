@@ -11,25 +11,8 @@ import { router, protectedProcedure } from "../trpc";
 
 import { FREE_RESCHEDULE_HOURS } from "@/lib/constants/policies";
 import { hoursUntil } from "@/lib/date";
+import { getClassBookedCount } from "@/server/db/queries/bookings";
 
-async function activeMembershipFor(
-  db: typeof import("@/db").db,
-  userId: number,
-) {
-  const today = new Date().toISOString().slice(0, 10);
-  return db
-    .select()
-    .from(memberships)
-    .where(
-      and(
-        eq(memberships.userId, userId),
-        eq(memberships.status, "active"),
-        sql`${memberships.endDate} >= ${today}`,
-      ),
-    )
-    .orderBy(desc(memberships.endDate))
-    .get();
-}
 
 export const reschedulesRouter = router({
   reschedule: protectedProcedure
@@ -153,14 +136,8 @@ export const reschedulesRouter = router({
       }
 
       // Check if target class is full
-      const [{ count }] = await ctx.db
-        .select({ count: sql<number>`count(*)` })
-        .from(bookings)
-        .where(
-          and(eq(bookings.classId, targetClass.id), eq(bookings.status, "booked")),
-        );
-
-      const targetIsFull = Number(count) >= targetClass.capacity;
+      const bookedCount = await getClassBookedCount(ctx.db, targetClass.id);
+      const targetIsFull = bookedCount >= targetClass.capacity;
 
       // Get the membership to check for unlimited credits
       const membership = originalBooking.membershipId
@@ -357,14 +334,8 @@ export const reschedulesRouter = router({
       }
 
       // Check if target class is full
-      const [{ count }] = await ctx.db
-        .select({ count: sql<number>`count(*)` })
-        .from(bookings)
-        .where(
-          and(eq(bookings.classId, targetClass.id), eq(bookings.status, "booked")),
-        );
-
-      const targetIsFull = Number(count) >= targetClass.capacity;
+      const bookedCount = await getClassBookedCount(ctx.db, targetClass.id);
+      const targetIsFull = bookedCount >= targetClass.capacity;
 
       return {
         valid: true,
