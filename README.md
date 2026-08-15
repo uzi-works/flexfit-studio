@@ -64,3 +64,38 @@ src/
   server/       tRPC routers
 documents/      empty, for your own notes
 ```
+
+## Summary of Refactoring Changes
+
+Below is a summary of the improvements and optimizations implemented across the codebase:
+
+### 1. Extraction of Pure Utilities & Constants (Batch 1)
+- Centrally defined business policy limits (e.g., free cancellation hours, unlimited credit thresholds) in `src/lib/constants/policies.ts`.
+- Extracted and centralized time calculation helpers into `src/lib/date.ts` (e.g., `hoursUntil`).
+
+### 2. UI Component Extractions (Batch 2)
+- Modularized complex pages by extracting reusable components:
+  - `AvailabilityEditor`: Extracted trainer availability logic to `src/components/trainer/availability-editor.tsx`.
+  - `TrainerClassCard`: Extracted class display items to `src/components/trainer/trainer-class-card.tsx`.
+  - `BookingListItem`: Extracted dashboard items to `src/components/booking/booking-list-item.tsx`.
+
+### 3. Shared Query Layer (Batch 3)
+- Created reusable database query modules:
+  - `src/server/db/queries/memberships.ts`: Consolidates user active membership checks.
+  - `src/server/db/queries/bookings.ts`: Standardizes booking count calculations and SQL helpers.
+
+### 4. Query Consolidation & Optimization (Batch 4)
+- Optimized trainer scheduling dashboard queries by joining booking rosters and check-in counts using aggregate SQL subqueries inside `trainers.upcomingClasses` endpoint (resolving client-side N+1 queries).
+- Shifted same-name class filtering in the `RescheduleModal` directly into database query parameters, avoiding client-side overhead.
+
+### 5. Service Layer Separation (Batch 5)
+- Decoupled business rules and transactions from tRPC endpoints by creating dedicated domain services:
+  - `booking-service.ts`: Manages standard bookings, cancellations, and waitlist queues.
+  - `reschedule-service.ts`: Handles rescheduling validations and swap transactions.
+  - `corporate-booking-service.ts`: Manages corporate pool credits and corporate bookings/check-ins.
+- Kept the standard routers clean, thin, and strictly controller-focused.
+- Maintained exact behavior-preservation constraints (e.g., rescheduling waitlist skip, corporate check-in logs).
+
+### 6. Loading State Regression Fix
+- Resolved an infinite refetching loop on the `/schedule` page and within the `RescheduleModal` by memoizing query dates via `useState`/`useEffect` hooks, stabilizing React Query cache keys.
+
